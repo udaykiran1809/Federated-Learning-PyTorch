@@ -40,7 +40,7 @@ def get_dataset(args):
                 # Chose euqal splits for every user
                 user_groups = cifar_noniid(train_dataset, args.num_users)
 
-    elif args.dataset == 'mnist' or 'fmnist':
+    elif args.dataset == 'mnist' or args.dataset == 'fmnist':
         if args.dataset == 'mnist':
             data_dir = '../data/mnist/'
         else:
@@ -68,6 +68,33 @@ def get_dataset(args):
             else:
                 # Chose euqal splits for every user
                 user_groups = mnist_noniid(train_dataset, args.num_users)
+                
+    elif args.dataset == 'cats_and_dogs':
+        data_dir = 'data/cats_and_dogs/'
+
+        # 1. Define the transformations (This was missing!)
+        apply_transform = transforms.Compose(
+            [transforms.Resize((32, 32)),
+             transforms.ToTensor(),
+             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+
+        # 2. Load the dataset
+        full_dataset = datasets.ImageFolder(root=data_dir, transform=apply_transform)
+        
+        # 3. Print the count to debug your data size
+        print(f"-------------> TOTAL IMAGES FOUND: {len(full_dataset)} <-------------")
+
+        # 4. Split into Train/Test
+        train_size = int(0.8 * len(full_dataset))
+        test_size = len(full_dataset) - train_size
+        train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size])
+
+        # 5. Create user groups
+        if args.iid:
+            user_groups = cifar_iid(train_dataset, args.num_users)
+        else:
+            print("Please use --iid 1 for this dataset")
+            exit()
 
     return train_dataset, test_dataset, user_groups
 
